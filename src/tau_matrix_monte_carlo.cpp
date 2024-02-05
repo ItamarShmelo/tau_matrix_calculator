@@ -66,3 +66,15 @@ void tau_matrix_monte_carlo_engine::set_temperature(double const temperature){
     sum_1_bt = 1.0 + 1.0 / theta;
     Sb = 1.0 + 1.0 / theta + 0.5/(theta*theta); 
 }
+
+Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature){
+    set_temperature(temperature);
+
+    for(std::size_t i = 0; i < num_energy_groups; ++i){
+        for(std::size_t j=0; j < num_energy_groups; ++j){
+            tau_temp[i][j] = 0.0;
+        }
+    }
+
+    return tau_temp;
+}
