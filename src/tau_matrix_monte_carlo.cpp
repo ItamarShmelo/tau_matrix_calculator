@@ -76,5 +76,87 @@ Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature
         }
     }
 
+    double sum_beta = 0.0;
+    std::vector<double> const Omega_0(3., 0.);
+    std::vector<double> Omega_0_tag(3., 0.), Omega_e(3., 0.), Omega_tag(3., 0.), Omega_p_tag(3., 0.);
+    std::vector<double> weight(num_energy_groups, 0.);
+    for(std::size_t sample_i=0; sample_i < num_of_samples; ++sample_i){
+        // step 1: sample electron velocity 
+        double const gamma = sample_gamma();
+        
+        // weight of sample
+        double const beta = std::sqrt(1.0 - 1.0 / (gamma*gamma));
+        sum_beta += beta;
+
+        // step 2: sample mu_e
+        double const mu_e = 1.0 - 2.0*sample_uniform_01();
+        Omega_e[0] = std::sqrt(1. - mu_e*mu_e);
+        Omega_e[2] = mu_e;
+        
+        // step 3: calculate 
+        double const D0 = gamma * (1.0 - beta*mu_e);
+        
+        // step 4
+        double const mu_0_tag = 1. / D0 * (1. - gamma/(1.+gamma)*(D0+1.)*beta*mu_e);
+        double const sin_0_tag = std::sqrt(1. - mu_0_tag*mu_0_tag);
+        Omega_0_tag[0] = -sin_0_tag;
+        Omega_0_tag[2] = mu_0_tag;
+
+        // step 5
+        double const mu_p_tag = 1.0 - 2.0*sample_uniform_01();
+        double const sin_p_tag = std::sqrt(1.0 - mu_p_tag*mu_p_tag);
+        double const psi_p_tag = sample_uniform_01()*2.*M_PI;
+        Omega_p_tag[0] = sin_p_tag * std::cos(psi_p_tag);
+        Omega_p_tag[1] = sin_p_tag * std::sin(psi_p_tag);
+        Omega_p_tag[2] = mu_p_tag;
+
+        // step 6 : rotate Omega_p by -theta_0
+        Omega_tag[0] = Omega_0_tag[2]*Omega_p_tag[0] + Omega_0_tag[0]*Omega_p_tag[2];
+        Omega_tag[1] = Omega_p_tag[1];
+        Omega_tag[2] = -Omega_0_tag[0]*Omega_p_tag[0] + Omega_0_tag[2]*Omega_p_tag[2];
+
+        // step 7 
+        double const D_tag = gamma*(1. + beta*(Omega_tag[0]*Omega_e[0] + Omega_tag[2]*Omega_e[2]));
+        
+        // step 8
+        double const interp = sample_uniform_01();
+        for(std::size_t g0=0; g0<num_energy_groups; ++g0){
+            // step 8a: sample energy
+            double const E0 = energy_groups_boundries[g0] + interp*(energy_groups_boundries[g0+1]-energy_groups_boundries[g0]);
+            // weight of sample
+            double const w_E0 = E0*E0*std::exp(-E0/(units::k_boltz*T));
+            weight[g0] += w_E0;
+            
+            // step 8b:
+            double const E0_tag = D0*E0;
+            double const A = 1. / (1. + (1. - mu_p_tag)*E0_tag / units::me_c2);
+            double const E_tag = A*E0_tag;
+            double const E = D_tag*E_tag;
+
+            auto g_iterator = std::lower_bound(energy_groups_boundries.begin(), energy_groups_boundries.end(), E);
+            auto g = std::distance(energy_groups_boundries.begin(), g_iterator)-1; // gives the index of the energy group
+
+            g = std::max(0L, g);
+            g = std::min(static_cast<long>(energy_groups_center.size())-1, g);
+
+            double const sigma = 0.75 * D0/gamma * A*A*(A + 1./A - sin_p_tag*sin_p_tag)*w_E0*beta;
+            if(g0 == g){
+                tau_temp[g0][g] += sigma;
+            } else {
+                double const factor = std::min(1.0, (E-E0)/(energy_groups_center[g]-energy_groups_center[g0]));
+                tau_temp[g0][g] += factor*sigma;
+                tau_temp[g0][g0] += (1.0 - factor)*sigma;
+            }
+        }    
+    }
+
+    double const beta_avg = sum_beta / num_of_samples;
+    
+    for(std::size_t g0=0; g0 < num_energy_groups; ++g0){
+        for(std::size_t g=0; g < num_energy_groups; ++g){
+            double const weight_avg = weight[g0]/num_of_samples;
+            tau_temp[g0][g] *= units::sigma_thomson/(num_of_samples*beta_avg*weight_avg);
+        }
+    }
     return tau_temp;
 }
