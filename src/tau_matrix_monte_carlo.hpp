@@ -21,7 +21,14 @@ class tau_matrix_monte_carlo_engine {
         Matrix generate_S_matrix(double const temperature);
         // Matrix generate_tau_matrix(double const temperature, double const density, double const a);
 
+        /*
+        \brief Sets the current temperature, theta, Sb and sum_bt_1 the latter are needed for the gamma sampling
+        */
         void set_temperature(double const temperature);
+
+        /*
+            \brief Sample from the distribution A*gamma^2e^(-gamma/theta)
+        */
         double sample_gamma();
         
         double theta;
