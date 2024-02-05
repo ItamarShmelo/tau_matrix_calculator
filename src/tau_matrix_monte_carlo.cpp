@@ -14,6 +14,7 @@ tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy
                             energy_groups_boundries(energy_groups_boundries_),
                             num_energy_groups(energy_groups_center.size()),
                             tau_temp(num_energy_groups, Vector(num_energy_groups, signaling_NaN)),
+                            S_temp(num_energy_groups, Vector(num_energy_groups, signaling_NaN)),
                             num_of_samples(num_of_samples_), 
                             T(signaling_NaN),
                             theta(signaling_NaN),
@@ -32,6 +33,7 @@ tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy
                             energy_groups_boundries(energy_groups_boundries_),
                             num_energy_groups(energy_groups_center.size()),
                             tau_temp(num_energy_groups, Vector(num_energy_groups, signaling_NaN)),
+                            S_temp(num_energy_groups, Vector(num_energy_groups, signaling_NaN)),
                             num_of_samples(num_of_samples_), 
                             T(std::numeric_limits<double>::signaling_NaN()), 
                             sample_uniform_01(
@@ -72,7 +74,7 @@ Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature
 
     for(std::size_t i = 0; i < num_energy_groups; ++i){
         for(std::size_t j=0; j < num_energy_groups; ++j){
-            tau_temp[i][j] = 0.0;
+            S_temp[i][j] = 0.0;
         }
     }
 
@@ -141,11 +143,11 @@ Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature
 
             double const sigma = 0.75 * D0/gamma * A*A*(A + 1./A - sin_p_tag*sin_p_tag)*w_E0*beta;
             if(g0 == g){
-                tau_temp[g0][g] += sigma;
+                S_temp[g0][g] += sigma;
             } else {
                 double const factor = std::min(1.0, (E-E0)/(energy_groups_center[g]-energy_groups_center[g0]));
-                tau_temp[g0][g] += factor*sigma;
-                tau_temp[g0][g0] += (1.0 - factor)*sigma;
+                S_temp[g0][g] += factor*sigma;
+                S_temp[g0][g0] += (1.0 - factor)*sigma;
             }
         }    
     }
@@ -155,8 +157,8 @@ Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature
     for(std::size_t g0=0; g0 < num_energy_groups; ++g0){
         for(std::size_t g=0; g < num_energy_groups; ++g){
             double const weight_avg = weight[g0]/num_of_samples;
-            tau_temp[g0][g] *= units::sigma_thomson/(num_of_samples*beta_avg*weight_avg);
+            S_temp[g0][g] *= units::sigma_thomson/(num_of_samples*beta_avg*weight_avg);
         }
     }
-    return tau_temp;
+    return S_temp;
 }

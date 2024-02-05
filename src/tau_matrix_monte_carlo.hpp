@@ -31,6 +31,7 @@ class tau_matrix_monte_carlo_engine {
         std::size_t num_energy_groups;
         
         Matrix tau_temp;
+        Matrix S_temp;
 
         std::size_t num_of_samples;
         double T;
