@@ -38,3 +38,24 @@ tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy
                                 boost::random::mt19937(static_cast<unsigned int>(seed)),
                                 boost::random::uniform_01<>()
                             ) {}
+
+double tau_matrix_monte_carlo_engine::sample_gamma(){
+    double const r0Sb = sample_uniform_01()*Sb;
+    
+    double const r1 = sample_uniform_01();
+
+    if(r0Sb <= 1.0){
+        double const r2 = sample_uniform_01();
+        double const r3 = sample_uniform_01();
+
+        return 1.0 - theta*std::log(r1*r2*r3);
+    }
+
+    if(r0Sb <= sum_1_bt){
+        double const r2 = sample_uniform_01();
+
+        return 1.0 - theta*std::log(r1*r2);
+    }
+
+    return 1.0 - theta*std::log(r1);
+}
