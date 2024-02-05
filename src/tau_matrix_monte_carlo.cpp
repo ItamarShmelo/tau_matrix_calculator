@@ -59,3 +59,10 @@ double tau_matrix_monte_carlo_engine::sample_gamma(){
 
     return 1.0 - theta*std::log(r1);
 }
+
+void tau_matrix_monte_carlo_engine::set_temperature(double const temperature){
+    T = temperature;
+    theta = units::k_boltz * T / units::me_c2;
+    sum_1_bt = 1.0 + 1.0 / theta;
+    Sb = 1.0 + 1.0 / theta + 0.5/(theta*theta); 
+}
