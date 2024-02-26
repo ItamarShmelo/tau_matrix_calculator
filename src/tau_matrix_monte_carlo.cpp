@@ -200,3 +200,12 @@ void tau_matrix_monte_carlo_engine::detailed_balance(){
         }
     }
 }
+
+void tau_matrix_monte_carlo_engine::generate_S_log_tables(std::vector<double> const& tmp_grid){
+    temperature_grid = tmp_grid;
+    S_log_tables = std::vector<Matrix>(temperature_grid.size(), Matrix(num_energy_groups, Vector(num_energy_groups, 0.0)));
+
+    for(std::size_t i=0; i < temperature_grid.size(); ++i){
+        S_log_tables[i] = generate_S_matrix(temperature_grid[i], true);
+    }
+}
