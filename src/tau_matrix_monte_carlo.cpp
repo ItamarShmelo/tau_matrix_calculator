@@ -73,7 +73,7 @@ void tau_matrix_monte_carlo_engine::set_temperature(double const temperature){
     Sb = 1.0 + 1.0 / theta + 0.5/(theta*theta); 
 }
 
-Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature){
+Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature, bool const log_grid){
     set_temperature(temperature);
 
     for(std::size_t i = 0; i < num_energy_groups; ++i){
@@ -168,6 +168,7 @@ Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature
         for(std::size_t g=0; g < num_energy_groups; ++g){
             double const weight_avg = weight[g0]/num_of_samples;
             S_temp[g0][g] *= units::sigma_thomson/(num_of_samples*beta_avg*weight_avg);
+            if(log_grid) S_temp[g0][g] = std::log(S_temp[g0][g]);
         }
     }
 

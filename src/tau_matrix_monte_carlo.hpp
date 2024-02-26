@@ -20,8 +20,7 @@ class tau_matrix_monte_carlo_engine {
                                       bool const force_detailed_balance_,
                                       std::size_t const seed);
 
-        Matrix generate_S_matrix(double const temperature);
-        // Matrix generate_tau_matrix(double const temperature, double const density, double const a);
+        Matrix generate_S_matrix(double const temperature, bool const log_grid);
 
         /*
         \brief Sets the current temperature, theta, Sb and sum_bt_1 the latter are needed for the gamma sampling
