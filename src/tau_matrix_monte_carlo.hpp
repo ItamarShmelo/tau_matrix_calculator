@@ -53,6 +53,11 @@ class tau_matrix_monte_carlo_engine {
         double sum_1_bt;
         double Sb;
         boost::random::variate_generator<boost::random::mt19937, boost::random::uniform_01<>> sample_uniform_01;
+
+        bool force_detailed_balance;
+
+        Vector temperature_grid;
+        std::vector<Matrix> S_log_tables;
 };
 
 #endif
