@@ -26,6 +26,8 @@ tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy
                                 boost::random::uniform_01<>()
                             ),
                             force_detailed_balance(force_detailed_balance_),
+                            temperature_grid(),
+                            S_log_tables() {}
 
 tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy_groups_center_, 
                                                              Vector const energy_groups_boundries_, 
@@ -44,6 +46,8 @@ tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy
                                 boost::random::uniform_01<>()
                             ),
                             force_detailed_balance(force_detailed_balance_),
+                            temperature_grid(),
+                            S_log_tables() {}
 
 double tau_matrix_monte_carlo_engine::sample_gamma(){
     double const r0Sb = sample_uniform_01()*Sb;
@@ -208,4 +212,53 @@ void tau_matrix_monte_carlo_engine::generate_S_log_tables(std::vector<double> co
     for(std::size_t i=0; i < temperature_grid.size(); ++i){
         S_log_tables[i] = generate_S_matrix(temperature_grid[i], true);
     }
+}
+
+Matrix tau_matrix_monte_carlo_engine::generate_tau_matrix(double const temperature, double const density, double const A, double const Z){
+    auto tmp_iterator = std::lower_bound(temperature_grid.begin(), temperature_grid.end(), temperature);
+    auto tmp_i = std::distance(temperature_grid.begin(), tmp_iterator) - 1; //  gives the index of lower bound of the temperature in the temperature grid
+
+    if(tmp_i+1 == temperature_grid.size()){
+        std::cout << "temperature given to generate_tau_matrix is to high" << std::endl;
+        exit(1);
+    }
+
+    if(tmp_i == -1){
+        std::cout << "temperature given to generate_tau_matrix is to low" << std::endl;
+        exit(1);
+    }
+
+    double const k_bT = units::k_boltz*temperature;
+    
+    double const Nelectron = density*units::Navogadro/A*Z;
+
+    double const x = (temperature-temperature_grid[tmp_i])/(temperature_grid[tmp_i+1]-temperature_grid[tmp_i]);
+    for(std::size_t i = 0; i < num_energy_groups; ++i){
+        for(std::size_t j=i; j < num_energy_groups; ++j){
+            // double const interp_value_log = S_log_tables[tmp_i][i][j]*(1. - x) + S_log_tables[tmp_i+1][i][j]*x;
+            // tau_temp[i][j] = std::exp(interp_value_log);
+            
+            double const interp_value = std::exp(S_log_tables[tmp_i][i][j])*(1. - x) + std::exp(S_log_tables[tmp_i+1][i][j])*x;
+            tau_temp[i][j] = interp_value;
+            
+            if(i == j) continue;
+
+            double const E_i = energy_groups_center[i];
+            double const E_j = energy_groups_center[j];
+            double const w_i = energy_groups_boundries[i+1] - energy_groups_boundries[i];
+            double const w_j = energy_groups_boundries[j+1] - energy_groups_boundries[j];
+
+            double const detailed_balance_factor = (E_i*E_i*w_i)/(E_j*E_j*w_j)*std::exp((E_j-E_i)/k_bT);
+
+            tau_temp[j][i] = tau_temp[i][j]*detailed_balance_factor;
+        }
+    }
+
+    for(std::size_t i=0; i<num_energy_groups; ++i){
+        for(std::size_t j=0; j<num_energy_groups; ++j){
+            tau_temp[j][i] *= Nelectron;
+        }
+    }
+    
+    return tau_temp;
 }

@@ -23,6 +23,9 @@ class tau_matrix_monte_carlo_engine {
         Matrix generate_S_matrix(double const temperature, bool const log_grid);
         
         void generate_S_log_tables(std::vector<double> const& tmp_grid);
+        
+        Matrix generate_tau_matrix(double const temperature, double const density, double const A, double const Z);
+
         /*
         \brief Sets the current temperature, theta, Sb and sum_bt_1 the latter are needed for the gamma sampling
         */
