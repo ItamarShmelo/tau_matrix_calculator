@@ -235,12 +235,12 @@ Matrix tau_matrix_monte_carlo_engine::generate_tau_matrix(double const temperatu
     double const x = (temperature-temperature_grid[tmp_i])/(temperature_grid[tmp_i+1]-temperature_grid[tmp_i]);
     for(std::size_t i = 0; i < num_energy_groups; ++i){
         for(std::size_t j=i; j < num_energy_groups; ++j){
-            // double const interp_value_log = S_log_tables[tmp_i][i][j]*(1. - x) + S_log_tables[tmp_i+1][i][j]*x;
-            // tau_temp[i][j] = std::exp(interp_value_log);
+            double const interp_value_log = S_log_tables[tmp_i][i][j]*(1. - x) + S_log_tables[tmp_i+1][i][j]*x;
+            tau_temp[i][j] = std::exp(interp_value_log);
             
-            double const interp_value = std::exp(S_log_tables[tmp_i][i][j])*(1. - x) + std::exp(S_log_tables[tmp_i+1][i][j])*x;
-            tau_temp[i][j] = interp_value;
-            
+            // double const interp_value = std::exp(S_log_tables[tmp_i][i][j])*(1. - x) + std::exp(S_log_tables[tmp_i+1][i][j])*x;
+            // tau_temp[i][j] = interp_value;
+
             if(i == j) continue;
 
             double const E_i = energy_groups_center[i];
