@@ -8,8 +8,9 @@
 static double constexpr signaling_NaN = std::numeric_limits<double>::signaling_NaN();
 
 tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy_groups_center_, 
-                                                             Vector const energy_groups_boundries_, 
-                                                             std::size_t const num_of_samples_) :
+                                                             Vector const energy_groups_boundries_,
+                                                             std::size_t const num_of_samples_,
+                                                             bool const force_detailed_balance_) :
                             energy_groups_center(energy_groups_center_),
                             energy_groups_boundries(energy_groups_boundries_),
                             num_energy_groups(energy_groups_center.size()),
@@ -23,11 +24,13 @@ tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy
                             sample_uniform_01(
                                 boost::random::mt19937(static_cast<unsigned int>(std::time(0))),
                                 boost::random::uniform_01<>()
-                            ) {}
+                            ),
+                            force_detailed_balance(force_detailed_balance_),
 
 tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy_groups_center_, 
                                                              Vector const energy_groups_boundries_, 
                                                              std::size_t const num_of_samples_, 
+                                                             bool const force_detailed_balance_,
                                                              std::size_t const seed) :
                             energy_groups_center(energy_groups_center_),
                             energy_groups_boundries(energy_groups_boundries_),
@@ -39,7 +42,8 @@ tau_matrix_monte_carlo_engine::tau_matrix_monte_carlo_engine(Vector const energy
                             sample_uniform_01(
                                 boost::random::mt19937(static_cast<unsigned int>(seed)),
                                 boost::random::uniform_01<>()
-                            ) {}
+                            ),
+                            force_detailed_balance(force_detailed_balance_),
 
 double tau_matrix_monte_carlo_engine::sample_gamma(){
     double const r0Sb = sample_uniform_01()*Sb;
@@ -166,6 +170,32 @@ Matrix tau_matrix_monte_carlo_engine::generate_S_matrix(double const temperature
             S_temp[g0][g] *= units::sigma_thomson/(num_of_samples*beta_avg*weight_avg);
         }
     }
-    
+
+    // Force detailed balance
+    if(force_detailed_balance) detailed_balance();
+
     return S_temp;
+}
+
+void tau_matrix_monte_carlo_engine::detailed_balance(){
+    double const k_bT = units::k_boltz*T;
+    double constexpr thresh = units::sigma_thomson*std::numeric_limits<double>::epsilon()*1e3;
+    for(std::size_t g0=0; g0<num_energy_groups; ++g0){
+        double const w_g0 = energy_groups_boundries[g0+1]-energy_groups_boundries[g0];
+        double const Eg0 = energy_groups_center[g0];
+        double const Wien_g0 = Eg0*Eg0*std::exp(-Eg0/k_bT);
+        for(std::size_t g=g0+1; g<num_energy_groups; ++g){
+            if(S_temp[g0][g] < thresh && S_temp[g][g0] < thresh) continue;
+            double const w_g = energy_groups_boundries[g+1]-energy_groups_boundries[g];
+            double const Eg = energy_groups_center[g];
+            double const Wien_g = Eg*Eg*std::exp(-Eg/k_bT);
+
+            double const factor = w_g0*Wien_g0/(w_g*Wien_g);
+            if(factor < 1.){
+                S_temp[g][g0] = factor*S_temp[g0][g];
+            } else {
+                S_temp[g0][g] = factor*S_temp[g][g0];
+            }
+        }
+    }
 }

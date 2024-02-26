@@ -10,12 +10,14 @@ class tau_matrix_monte_carlo_engine {
     public:
         tau_matrix_monte_carlo_engine(Vector const energy_groups_center_, 
                                       Vector const energy_groups_boundaries_, 
-                                      std::size_t const num_of_samples_);
+                                      std::size_t const num_of_samples_,
+                                      bool const force_detailed_balance_);
         
         // for debugging enable to set the seed for the random number generator
         tau_matrix_monte_carlo_engine(Vector const energy_groups_center_, 
                                       Vector const energy_groups_boundries_, 
                                       std::size_t const num_of_samples_, 
+                                      bool const force_detailed_balance_,
                                       std::size_t const seed);
 
         Matrix generate_S_matrix(double const temperature);
@@ -33,6 +35,9 @@ class tau_matrix_monte_carlo_engine {
         
         double theta;
     private:
+
+        void detailed_balance();
+
         Vector energy_groups_center;
         Vector energy_groups_boundries;
         std::size_t num_energy_groups;
