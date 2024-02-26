@@ -62,9 +62,18 @@ int main(){
     1.6022e-5
     };
 
-    auto tau_engine = tau_matrix_monte_carlo_engine(energy_groups_center, energy_groups_boundries, 200000, 0);
+    auto tau_engine = tau_matrix_monte_carlo_engine(energy_groups_center, energy_groups_boundries, 200000, true, 0);
 
     // double const T = 2.0*units::me_c2 / units::k_boltz;
     double constexpr T = 10.0*units::kev_to_kelvin;
-    Matrix m = tau_engine.generate_S_matrix(T);
+    Matrix m = tau_engine.generate_S_matrix(T, false);
+
+    Vector tmp_grid = {1e-2, 1., 3., 4., 6., 10., 20., 30., 40., 60., 80., 100.};
+    for(auto& temp : tmp_grid){
+        temp *= units::kev_to_kelvin;
+    }
+
+    tau_engine.generate_S_log_tables(tmp_grid);
+    Matrix m2 = tau_engine.generate_tau_matrix(15.*units::kev_to_kelvin, 0.77, 4.011, 2.);
+
 }
