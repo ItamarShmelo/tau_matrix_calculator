@@ -9,7 +9,7 @@ static constexpr double me_c2 = me*c*c; // [gr*cm^2/s^2] electron rest energy
 
 static constexpr double k_boltz = 1.3807e-16; // [gr * cm^2 / s^2 / K] boltzmann constant
 
-static constexpr double sigma_thomson = 0.665e-25;
+static constexpr double sigma_thomson = 6.65e-25; // [cm^2]
 
 static constexpr double ev = 1.602176634e-12;
 static constexpr double ev_to_kelvin = ev/k_boltz;
